@@ -1,0 +1,222 @@
+//lines and offsets
+//ballad, imit, chord, silence, chaos
+let amplitudeOffset;
+let offsetLines;
+let amplitudes = [50, 100, 20, 3, 200]
+let alphas = [150, 120, 50, 200, 120]
+//video
+let a; //alpha of background
+let bg; //background shade
+let st; //stroke of shape
+let scales = [190, 210, 230, 250, 270];
+var video;
+var vScale;
+var videos = ["R1.mp4", "R2.mp4", "R3.mp4", "R4.mp4", "R5.mp4", "R6.mp4", "R7.mp4", "R8.mp4", "R9.mp4", "R10.mp4", "R11.mp4", "R12.mp4", "R13.mp4", "R14.mp4", "R15.mp4", ]
+
+//Images
+let rImage;
+let notes = [];
+
+//roles
+let rRole;
+let roles = ['attacker', 'supporter'];
+
+//timer
+var timer;
+var interval;
+var Countdown;
+
+
+//Rounds
+let roundLength = [104, 139, 144, 94, 114]; //if round already been chosen, how not pick again?
+let playRound = false; //to switch between a pause and a round
+let pauseLength = 5;
+
+//NIKO
+let Deaths = [0, 0, 27, 5, 15];
+let Rounds = [
+  [0], 
+  [104, 99],
+  [35],
+  [0],
+  [79, 52]
+]; //events in round
+
+//random choosers
+let r;
+
+function preload() {
+  supporter = loadImage('roles/supporter.png');
+  attacker = loadImage('roles/attacker.png');
+  notes[0] = loadImage('notes/1.png');
+  notes[1] = loadImage('notes/2.png');
+  notes[2] = loadImage('notes/3.png');
+  notes[3] = loadImage('notes/4.png');
+  notes[4] = loadImage('notes/5.png');
+  notes[5] = loadImage('notes/6.png');
+  notes[6] = loadImage('notes/7.png');
+  notes[7] = loadImage('notes/8.png');
+  notes[8] = loadImage('notes/9.png');
+  notes[9] = loadImage('notes/10.png');
+}
+
+function setup() {
+  r = 0; 
+  amplitudeOffset = amplitudes[r];
+  offsetLines = amplitudeOffset/2;
+  bg = 51;
+  a = alphas[r];
+  st = 255;
+  textAlign(CENTER);
+  //choose a random round
+  timer = createP("timer");
+  doTimer(); //start the timer
+  
+  //video stuff
+  vScale = random(scales);
+  createCanvas(1900 , 1080);
+  frameRate(30);
+  pixelDensity(1);
+  video = createVideo([videos[r]]);
+  video.size(width / vScale, height / vScale);
+}
+
+function mousePressed() { //just to try out resolutions
+    let fs = fullscreen();
+    fullscreen(!fs);
+}
+
+function doTimer() {
+  Countdown = pauseLength; //start with a pause
+  interval = setInterval(timeIt, 1000); //second value is the time in ms
+}
+
+function timeIt() {
+  timer.html(Countdown);
+  Countdown--;
+  
+  if (Rounds[r].includes(Countdown) && playRound == true) { //new things at event
+    rImage = random(notes);
+    rRole = random(roles);
+    vScale = random(scales);
+  }
+  
+  if (Countdown == pauseLength - 1 && playRound == false) { //at the start of the pause
+    clear ();
+    video.stop();
+    //vScale = random(scales);
+    video = createVideo([videos[r]]);
+    rImage = random(notes);
+    rRole = random(roles);
+    bg = 51;
+    st = bg;
+  }
+  
+  if (Countdown == roundLength[r] - 1 && playRound) { //at the start of the round
+    video.play();
+    vScale = random(scales);
+  }
+  
+  if (Countdown < 0 && playRound == false) { //at the end of the pause
+    playRound = !playRound;
+    Countdown = roundLength[r]; //when under 0, choose a new round
+    st = 255;
+    
+  }
+  if (Countdown < 0 && playRound) { //At the end of the round
+    Countdown = pauseLength;
+    playRound = !playRound; //to switch between a pause and a round
+    r = r + 1;
+    console.log(r);
+    amplitudeOffset = amplitudes[r];
+    offsetLines = amplitudeOffset/2;
+    a = alphas[r];
+  }
+}
+
+
+function draw() {
+  if (r < 5) {
+  background(bg, a);
+  video.size(width / vScale, height / vScale);
+  video.loadPixels();
+  for (var y = 1; y <= (video.height+30); y++) { //why not filling the whole screen :(
+    beginShape();
+
+    for (var x = 0; x <= (video.width+1); x++) {
+      var index = (x + y * video.width) * 4;
+      var re = video.pixels[index + 0];
+      var g = video.pixels[index + 1];
+      var b = video.pixels[index + 2];
+      var bright = 0.2126 * re + 0.7152 * g + 0.0722 * b;
+      //var wx = map(bright, 0, 255, 0, video.width);
+      var wy = map(bright, 0, 255, -amplitudeOffset, amplitudeOffset);
+      stroke(st);
+      noFill();
+      vertex(x * vScale, ((y * vScale + wy)+offsetLines));
+    }
+    endShape();
+  }
+     
+  if (notes.includes(rImage)) { // AT EVERY EVENT
+    image(rImage, (width-240), 0, 240, 135);
+  }
+  
+  if (Deaths[r] > 0) { //DEATHS
+    if (Deaths[r] == Countdown && playRound == true) {
+      bg = 0;
+      st = bg
+    }
+  }
+
+  if (rRole == 'attacker') {
+  image(attacker, (width-210), 140, 180, 60);
+  }
+  if (rRole == 'supporter') {
+  image(supporter, (width-210), 140, 180, 60);
+  }
+
+  if (Countdown < 5 && playRound == true) {
+    textSize(80);
+    stroke(190, 37, 40);
+    fill(190, 37, 40);
+    text(Countdown+1, (width-120), 260)
+  }
+
+  if (Countdown < 5 && playRound == false) {
+    textSize(80);
+    stroke(37, 190, 69);
+    fill(37, 190, 69);
+    text(Countdown+1, (width-120), 260)
+  }
+
+  if ((Rounds[r]).includes(Countdown-4) && playRound == true && Rounds[r] != 0) { 
+    textSize(80);
+    stroke(37, 190, 69);
+    fill(37, 190, 69);
+    roundCountdown = ((Countdown + 4) - Countdown)
+    text(roundCountdown, (width-120), 260)
+  } 
+    if ((Rounds[r]).includes(Countdown-3) && playRound == true && Rounds[r] != 0) { 
+    textSize(80);
+    stroke(37, 190, 69);
+    fill(37, 190, 69);
+    roundCountdown = ((Countdown + 3) - Countdown)
+    text(roundCountdown, (width-120), 260)
+  } 
+    if ((Rounds[r]).includes(Countdown-2) && playRound == true && Rounds[r] != 0) { 
+    textSize(80);
+    stroke(37, 190, 69);
+    fill(37, 190, 69);
+    roundCountdown = ((Countdown + 2) - Countdown)
+    text(roundCountdown, (width-120), 260)
+  } 
+    if ((Rounds[r]).includes(Countdown-1) && playRound == true && Rounds[r] != 0) { 
+    textSize(80);
+    stroke(37, 190, 69);
+    fill(37, 190, 69);
+    roundCountdown = ((Countdown + 1) - Countdown)
+    text(roundCountdown, (width-120), 260)
+  }
+  }
+}

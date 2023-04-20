@@ -39,7 +39,7 @@ let Rounds = [
   [95],
   [94],
   [65, 58, 39, 30],
-  [85, 80, 75, 10],
+  [85, 80, 75, 10]
 ]; //events in round
 
 //random choosers

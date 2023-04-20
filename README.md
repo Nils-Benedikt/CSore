@@ -1,5 +1,5 @@
 # CSore
-Live-generated graphic score based on a CSGO match
+Live-generated graphic score based on a CSGO match.
 
 Website: nbm.mmm.page/csore
 
